@@ -27,9 +27,23 @@ await using (var scope = app.Services.CreateAsyncScope())
     await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.EnsureCreatedAsync();
 }
 
-app.MapPost("/orders", (CreateOrderRequest request) =>
+app.MapPost("/orders", async (
+    CreateOrderRequest request, AppDbContext db, IBus bus, CancellationToken cancellationToken) =>
 {
-    return Results.Ok(new { message = "Order creation is not implemented." });
+    if (request.CustomerId == Guid.Empty || request.Amount <= 0 ||
+        request.Amount > 9999999999999999.99m || decimal.Round(request.Amount, 2) != request.Amount)
+    {
+        return Results.BadRequest("A customer ID and a positive amount with at most two decimal places are required.");
+    }
+
+    var order = new Order(request.CustomerId, request.Amount) { Status = OrderStatus.Placed };
+    db.Orders.Add(order);
+    await db.SaveChangesAsync(cancellationToken);
+
+    var orderCreated = new OrderCreated(Guid.NewGuid(), order.Id, order.Amount);
+    await bus.PublishAsync(orderCreated, cancellationToken);
+
+    return Results.Ok(order.Id);
 });
 
 await app.RunAsync();
