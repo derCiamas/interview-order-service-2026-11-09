@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.21.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.33" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../OrderService.Contracts/OrderService.Contracts.csproj" />
+  </ItemGroup>
+</Project>
